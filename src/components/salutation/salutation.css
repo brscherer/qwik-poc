@@ -1,0 +1,37 @@
+p, span {
+  font: 700 4rem/1 "Oswald", sans-serif;
+  letter-spacing: 0;
+  padding: .25rem 0 .325rem;
+  text-shadow: 0 0 80px rgba(255,255,255,.5);
+
+/* Clip Background Image */
+
+  background: url(https://i.ibb.co/RDTnNrT/animated-text-fill.png) repeat-y;
+  -webkit-background-clip: text;
+  background-clip: text;
+
+/* Animate Background Image */
+
+  -webkit-text-fill-color: transparent;
+  -webkit-animation: aitf 80s linear infinite;
+
+/* Activate hardware acceleration for smoother animations */
+
+  -webkit-transform: translate3d(0,0,0);
+  -webkit-backface-visibility: hidden;
+
+}
+
+@media (max-width: 450px) {
+	p, span {
+		font: 700 1.9rem/1 "Oswald", sans-serif;
+    max-width: 100%;
+    text-align: center;
+	}
+}
+
+
+@-webkit-keyframes aitf {
+	0% { background-position: 0% 50%; }
+	100% { background-position: 100% 50%; }
+}
