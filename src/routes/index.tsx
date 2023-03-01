@@ -1,17 +1,18 @@
-import { component$, useResource$, useStore, Resource } from '@builder.io/qwik';
-import type { DocumentHead } from '@builder.io/qwik-city';
-import { Avatar } from '~/components/avatar/avatar';
-import { Salutation } from '~/components/salutation/salutation';
-import { getProfile } from '~/services/github';
-import type { Profile } from '~/types/profile';
+import { component$, useResource$, useStore, Resource } from "@builder.io/qwik";
+import type { DocumentHead } from "@builder.io/qwik-city";
+import { Avatar } from "~/components/avatar/avatar";
+import { Salutation } from "~/components/salutation/salutation";
+import { SocialLinks } from "~/components/socialLinks/socialLinks";
+import { getProfile } from "~/services/github";
+import type { Profile } from "~/types/profile";
 
 export default component$(() => {
   const github = useStore({
-    profile: 'brscherer',
+    profile: "brscherer",
   });
 
   const profileResource = useResource$<Profile>(({ track, cleanup }) => {
-    // We need a way to re-run fetching data whenever the `github.org` changes.
+    // We need a way to re-run fetching data whenever the `github.profile` changes.
     // Use `track` to trigger re-running of this data fetching function.
     track(() => github.profile);
 
@@ -26,29 +27,32 @@ export default component$(() => {
   });
 
   return (
-    <div class="container">
+    <>
       <Resource
+        value={profileResource}
+        onPending={() => <>Loading...</>}
+        onRejected={(error) => <>Error: {error.message}</>}
+        onResolved={(profile) => <Salutation profile={profile} />}
+      />
+      <div class="container">
+        <Resource
           value={profileResource}
           onPending={() => <>Loading...</>}
           onRejected={(error) => <>Error: {error.message}</>}
           onResolved={(profile) => <Avatar profile={profile} />}
         />
-      <Resource
-          value={profileResource}
-          onPending={() => <>Loading...</>}
-          onRejected={(error) => <>Error: {error.message}</>}
-          onResolved={(profile) => <Salutation profile={profile} />}
-        />
-    </div>
+        <SocialLinks />
+      </div>
+    </>
   );
 });
 
 export const head: DocumentHead = {
-  title: 'Bruno Scherer',
+  title: "Bruno Scherer",
   meta: [
     {
-      name: 'description',
-      content: 'Bruno Scherer personal website',
+      name: "description",
+      content: "Bruno Scherer personal website",
     },
   ],
 };

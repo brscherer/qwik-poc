@@ -1,65 +1,74 @@
-# Qwik City App ⚡️
+# Qwik PoC
 
-- [Qwik Docs](https://qwik.builder.io/)
-- [Discord](https://qwik.builder.io/chat)
-- [Qwik GitHub](https://github.com/BuilderIO/qwik)
-- [@QwikDev](https://twitter.com/QwikDev)
-- [Vite](https://vitejs.dev/)
+## Hydration
+When an SSR/SSG application boots up on a client, it requires that the framework on the client restores three pieces of information:
+1. Listeners 
+    1. locate event listeners and install them on the DOM nodes to make the application interactive.
+2. Component tree
+    1. build up an internal data structure representing the application component tree.
+3. Application state
+    1. restore the application state.
 
----
+It is expensive because is needed to download all of the component code associated with current page and because frameworks have to execute the templates associated with these components to rebuild listener location and internal component tree.
 
-## Project Structure
+Its all about re-execution.
 
-This project is using Qwik with [QwikCity](https://qwik.builder.io/qwikcity/overview/). QwikCity is just a extra set of tools on top of Qwik to make it easier to build a full site, including directory-based routing, layouts, and more.
+## Resumability
+It is about pausing execution in the server and resuming execution in the client without replaying and downloading all of the application logic.
 
-Inside your project, you'll see the following directory structure:
+Any point of its lifecycle can be serialized and moved to a different VM instance (server to browser) there the application resumes where the serialization stopped.
 
-```
-├── public/
-│   └── ...
-└── src/
-    ├── components/
-    │   └── ...
-    └── routes/
-        └── ...
-```
+Still need to a solve the three problems (listeners, component tree, application state) in a way that is compatible with a no-code startup.
 
-- `src/routes`: Provides the directory based routing, which can include a hierarchy of `layout.tsx` layout files, and an `index.tsx` file as the page. Additionally, `index.ts` files are endpoints. Please see the [routing docs](https://qwik.builder.io/qwikcity/routing/overview/) for more info.
+### Listeners
 
-- `src/components`: Recommended directory for components.
+`<button on:click="./chunk.js#handler_symbol">click me</button>`
 
-- `public`: Any static assets, like images, can be placed in the public directory. Please see the [Vite public directory](https://vitejs.dev/guide/assets.html#the-public-directory) for more info.
+Qwik setup a single global listener instead of many individuals per DOM element.
 
-## Add Integrations and deployment
+HTML contains chunk and symbol name. The attribute tells Qwikloader which code chunk to download and which symbol to retrieve from the chunk
 
-Use the `npm run qwik add` command to add additional integrations. Some examples of integrations include: Cloudflare, Netlify or Express server, and the [Static Site Generator (SSG)](https://qwik.builder.io/qwikcity/guides/static-site-generation/).
+Qwik’s event processing allows insertion of async lazy load
 
-```shell
-npm run qwik add # or `yarn qwik add`
-```
 
-## Development
+### Component Tree
+Qwik collects component boundary information and serializes that information into HTML instead of re-executing component templates and memoize component boundary location.By doing that
+- Qwik can rebuild component hierarchy information without the component code actually being present and can remain lazy
+- Can lazy load only components that need to be re-rendered instead of all upfront
+- Qwik collects relationship between components and stores, creating a subscription model that informs Qwik which components need to be re-rendered as a result of state change and this is also serialized into HTML
 
-Development mode uses [Vite's development server](https://vitejs.dev/). During development, the `dev` command will server-side render (SSR) the output.
 
-```shell
-npm start # or `yarn start`
-```
+### Application State
 
-> Note: during dev mode, Vite may request a significant number of `.js` files. This does not represent a Qwik production build.
+Every framework serializes application state into HTML so that can be restored as part of hydration.
+But usually component props are created by the parent component which creates a chain reaction.
+In order to restore component X, its parents need to be restored as well
+Qwik allows any component to be resumed without parent component code being present.
 
-## Preview
+`JSON.stringify` is one way to think about serialization, but has some limitations.
 
-The preview command will create a production build of the client modules, a production build of `src/entry.preview.tsx`, and run a local server. The preview server is only for convenience to locally preview a production build, and it should not be used as a production server.
+###  Qwik solves some of them:
+- JSON produces DAG (Directed Acyclic Graph) and it means object can’t have circular references when being serialized. Application State is often circular, so this is a problem. Qwik ensures the circular references get properly saved and then restored when the graph of objects gets serialized.
+- JSON can’t serialize some object types such DOM references and Dates. Qwik serialization format enables serializing:
+    - DOM References
+    - Promises
+    - Function closures
+    - Dates
+    - URL objects
+    - Map and Set instances
 
-```shell
-npm run preview # or `yarn preview`
-```
+### Qwik doesn’t solve:
+- Serialization of Streams, etc…
+- Serialization of classes (instance and prototype)
 
-## Production
 
-The production build will generate client and server modules by running both client and server build commands. Additionally, the build command will use Typescript to run a type check on the source code.
+Other Benefits of Resumability
 
-```shell
-npm run build # or `yarn build`
-```
+* Serializing existing PWA apps so that users don't lose context when they return to the application
+* Improved rendering performance because only changed components need to be re-rendered
+* Fine-grained lazy-loading
+* Decreased memory pressure, especially on mobile devices
+* Progressive interactivity of existing static websites
+
+## References
+https://qwik.builder.io/docs/concepts/resumable/
