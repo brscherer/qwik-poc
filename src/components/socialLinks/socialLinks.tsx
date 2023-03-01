@@ -1,4 +1,5 @@
 import { component$, useStylesScoped$ } from '@builder.io/qwik';
+import { Link } from '@builder.io/qwik-city';
 import { GithubIcon } from '../icons/github';
 import { LinkedinIcon } from '../icons/linkedin';
 
@@ -19,6 +20,11 @@ export const SocialLinks = component$(() => {
           <a href="https://www.linkedin.com/in/brunorphl/">
             <LinkedinIcon />
           </a>
+        </li>
+        <li>
+          <Link href="/about">
+            About me
+          </Link>
         </li>
       </ul>
     </section>

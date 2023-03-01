@@ -35,6 +35,11 @@ main {
 	margin: 0 auto;
 }
 
+a {
+	font-weight: bold;
+	text-decoration: none;
+	font-size: 2rem;
+}
 
 body{
 	font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
